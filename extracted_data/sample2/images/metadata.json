@@ -1,0 +1,34 @@
+[
+    {
+        "file_name": "image_1.jpeg",
+        "page_number": 1,
+        "dimensions": [
+            1373,
+            913
+        ]
+    },
+    {
+        "file_name": "image_2.jpeg",
+        "page_number": 4,
+        "dimensions": [
+            1373,
+            913
+        ]
+    },
+    {
+        "file_name": "image_3.jpeg",
+        "page_number": 6,
+        "dimensions": [
+            1379,
+            1674
+        ]
+    },
+    {
+        "file_name": "image_4.jpeg",
+        "page_number": 9,
+        "dimensions": [
+            1379,
+            1511
+        ]
+    }
+]
