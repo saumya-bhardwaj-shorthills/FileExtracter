@@ -1,3 +1,2 @@
-sample.pdf
-sample2.pdf
-extracted_data
+extracted_data/
+*.pdf
