@@ -1,50 +1,54 @@
-from loaders.pdf_loader import PDFLoader
-from loaders.docx_loader import DOCXLoader
-from loaders.ppt_loader import PPTLoader
-from loaders.file_loader import FileLoader
+import fitz  # PyMuPDF for images and URLs
+from PyPDF2 import PdfReader
 
 class DataExtractor:
-    def __init__(self, loader: FileLoader):
-        self.loader = loader
-        self.file = self.loader.load_file()
+    def __init__(self, pdf_loader):
+        self.pdf_loader = pdf_loader
+        self.pdf_reader = pdf_loader.load_file()
+        self.pdf_path = pdf_loader.file_path
 
     def extract_text(self):
-        """Extract text and metadata such as page numbers and font styles."""
-        if isinstance(self.loader, PDFLoader):
-            return self._extract_text_pdf()
-        elif isinstance(self.loader, DOCXLoader):
-            return self._extract_text_docx()
-        elif isinstance(self.loader, PPTLoader):
-            return self._extract_text_ppt()
-
-    def _extract_text_pdf(self):
-        texts = []
-        for page_num, page in enumerate(self.file.pages, start=1):
-            page_text = page.extract_text()
-            texts.append({"page": page_num, "text": page_text})
-        return texts
-
-    def _extract_text_docx(self):
-        texts = []
-        for para in self.file.paragraphs:
-            texts.append(para.text)
-        return texts
-
-    def _extract_text_ppt(self):
-        texts = []
-        for slide in self.file.slides:
-            slide_text = ' '.join([shape.text for shape in slide.shapes if hasattr(shape, "text")])
-            texts.append(slide_text)
-        return texts
-
-    def extract_links(self):
-        """Extract hyperlinks from the document."""
-        return []
+        """Extract text using PyPDF2."""
+        text = []
+        for page in self.pdf_reader.pages:
+            text.append(page.extract_text())
+        return text
 
     def extract_images(self):
-        """Extract images from the document."""
-        return []
+        """Extract images from the PDF using PyMuPDF."""
+        images = []
+        pdf_document = fitz.open(self.pdf_path)
+        for page_num in range(len(pdf_document)):
+            page = pdf_document.load_page(page_num)
+            image_list = page.get_images(full=True)
+            for img in image_list:
+                xref = img[0]
+                base_image = pdf_document.extract_image(xref)
+                images.append({
+                    "image_data": base_image["image"],
+                    "ext": base_image["ext"],
+                    "page": page_num + 1,
+                    "dimensions": (base_image["width"], base_image["height"])
+                })
+        pdf_document.close()
+        return images
 
-    def extract_tables(self):
-        """Extract tables from the document."""
-        return []
+    def extract_urls(self):
+        """Extract URLs from the PDF using PyMuPDF."""
+        urls = []
+        pdf_document = fitz.open(self.pdf_path)
+        for page_num in range(len(pdf_document)):
+            page = pdf_document.load_page(page_num)
+            links = page.get_links()
+            for link in links:
+                if "uri" in link:
+                    rect = link["from"]
+                    urls.append({
+                        "url": link["uri"],
+                        "page": page_num + 1,
+                        "position": {
+                            "x0": rect.x0, "y0": rect.y0, "x1": rect.x1, "y1": rect.y1
+                        }
+                    })
+        pdf_document.close()
+        return urls
